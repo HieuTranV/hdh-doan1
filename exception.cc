@@ -170,7 +170,7 @@ ExceptionHandler(ExceptionType which)
 			{
 
 				printf("Calling SC_Open\n");
-				int virtAddr, MaxFileLength = 32, mode;
+				int virtAddr, MaxFileLength = 32, mode, retVal;
 				char* filename;
 				
 				virtAddr = machine->ReadRegister(4);
@@ -182,28 +182,46 @@ ExceptionHandler(ExceptionType which)
 				if(mode < 0 || mode > 1) {
 					printf("Khong ton tai mode tren\n");
 					machine->WriteRegister(2, -1);
-					
+					break;
 				}
 				
 				else if(fileSystem->currentSize >= 10) {
 					printf("Khong the mo file vi bang mo ta file da het o nho\n");
 					machine->WriteRegister(2, -1);
+					break;
 				}
 				else if(mode == 0 || mode == 1) {
 					
-					if(fileSystem->Open(filename, mode) == NULL) {
+					if(strcmp(filename, "stdin") == 0) {
+						printf("Mo thanh cong file stdin (Id = 0)\n");
+						machine->WriteRegister(2, 0);
+						break;
+					}
+
+					else if(strcmp(filename, "stdout") == 0) {
+						printf("Mo thanh cong file stdout (Id = 1)\n");
+						machine->WriteRegister(2, 1);
+						break;
+					}
+
+					else if(fileSystem->Open(filename, mode) == NULL) {
 						printf("File khong ton tai\n");
 						machine->WriteRegister(2, -1);
+						break;
 					}
-					if(mode == 0) {
+
+					
+
+					else if(mode == 0) {
 						printf("Mo file %s thanh cong (mode = doc va ghi)\n", filename);
-						machine->WriteRegister(2, 0);
 					}
 					else {
 						printf("Mo file %s thanh cong (mode = doc)\n", filename);
-						machine->WriteRegister(2, 0);
 					}
-					printf("OpenFileID cua %s la : %d\n", filename, (fileSystem->currentSize) -1);
+					retVal = (fileSystem->recentId) - 1;
+					printf("OpenFileID cua %s la : %d\n", filename, retVal);
+					machine->WriteRegister(2, retVal);
+					break;
 				}
 				
 			}
@@ -211,7 +229,7 @@ ExceptionHandler(ExceptionType which)
 			{
 				int openFileId;	
 				openFileId = machine->ReadRegister(4);
-				if(openFileId < 2 || openFileId > 9 || openFileId >= fileSystem->currentSize) {
+				if(openFileId < 0 || openFileId > 9) {
 					printf("OpenFileId %d khong hop le\n", openFileId);
 					machine->WriteRegister(2, -1);
 				}
@@ -222,9 +240,10 @@ ExceptionHandler(ExceptionType which)
 				}	
 
 			}
-			advancePC();
-			break;
 			
-		}	
+		
+			
+		}
+		advancePC();	
 	}	
 }

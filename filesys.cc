@@ -144,14 +144,17 @@ FileSystem::FileSystem(bool format)
 
     // khoi tao fileSystem
     	fileIndex = new OpenFile*[10];
-	currentSize = 2;
+	currentSize = 0;
 	for(int i = 0; i < 10; i++) {
 		fileIndex[i] = NULL;
 	}
 	
 
-	this->Create("stdin", 0);
+	this->Create("stdin", 0); // con tro kieu FileSystem
 	this->Create("stdout", 0);
+	
+	fileIndex[0] = this->Open("stdin", 0); 
+	fileIndex[1] = this->Open("stdout", 0);
 }
 
 
@@ -241,7 +244,14 @@ FileSystem::Create(char *name, int initialSize)
 
 OpenFile *
 FileSystem::Open(char *name)
-{ 
+{
+    if(strcmp(name, "stdin") == 0) { // file stdin va stdout da mo tu luc khoi tao fileSystem
+		return fileIndex[0];		
+    }
+    if(strcmp(name, "stout") == 0) {
+		return fileIndex[1];
+    }
+ 
     Directory *directory = new Directory(NumDirEntries);
     OpenFile *openFile = NULL;
     int sector, emptySlot;
@@ -265,6 +275,7 @@ FileSystem::Open(char *name)
 	return fileIndex[emptySlot];	// return NULL if not found
     }
     currentSize++;
+    recentId = currentSize;
     return fileIndex[emptySlot];	
 			
 }
@@ -272,7 +283,16 @@ FileSystem::Open(char *name)
 
 OpenFile *
 FileSystem::Open(char *name, int type)
-{ 
+{
+
+     if(strcmp(name, "stdin") == 0) { // file stdin va stdout da mo tu luc khoi tao fileSystem
+		return fileIndex[0];		
+     }
+     if(strcmp(name, "stout") == 0) {
+		return fileIndex[1];
+     }
+
+ 
     Directory *directory = new Directory(NumDirEntries);
     OpenFile *openFile = NULL;
     int sector, emptySlot;
@@ -298,12 +318,17 @@ FileSystem::Open(char *name, int type)
 	return fileIndex[emptySlot];	// return NULL if not found
     }
     currentSize++;
+    recentId = currentSize;
     return fileIndex[emptySlot];	
 
 }
 
 
 void FileSystem::CloseFileId(int OpenFileId) {
+
+    if(OpenFileId == 0 || OpenFileId == 1) {
+		return;
+    }
     delete fileIndex[OpenFileId];
     fileIndex[OpenFileId] = NULL;
     currentSize--;

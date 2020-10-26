@@ -48,12 +48,12 @@ class FileSystem {
 
     OpenFile** fileIndex; // bang mo ta file trong khoi tao cua fileSystem
     int currentSize; // max = 10
-    
+    int recentId; // Id vua moi duoc mo
     
 	
     FileSystem(bool format) {
 	fileIndex = new OpenFile*[10];
-	currentSize = 2;
+	currentSize = 0;
 	for(int i = 0; i < 10; i++) {
 		fileIndex[i] = NULL;
 	}
@@ -62,6 +62,8 @@ class FileSystem {
 	this->Create("stdin", 0); // con tro kieu FileSystem
 	this->Create("stdout", 0);
 	
+	fileIndex[0] = this->Open("stdin", 0); 
+	fileIndex[1] = this->Open("stdout", 0);
 	
     }
 	
@@ -85,17 +87,34 @@ class FileSystem {
 	}
 
     OpenFile* Open(char *name) {
+
+	if(strcmp(name, "stdin") == 0) { // file stdin va stdout da mo tu luc khoi tao fileSystem
+		return fileIndex[0];
+	}
+	if(strcmp(name, "stout") == 0) {
+		return fileIndex[1];
+	}
     	int fileDescriptor = OpenForReadWrite(name, FALSE);
 
 	printf("Calling OpenFile without type\n");
 	if (fileDescriptor == -1) return NULL;
 
 	currentSize++; // mo file thanh cong tang bien diem trong bang mo ta file
+	recentId = currentSize;
 	return new OpenFile(fileDescriptor);
       }
 
 
+
     OpenFile* Open(char* name, int type) {
+
+          if(strcmp(name, "stdin") == 0) { // file stdin va stdout da mo tu luc khoi tao fileSystem
+		return fileIndex[0];		
+	  }
+	  if(strcmp(name, "stout") == 0) {
+		return fileIndex[1];
+	  }
+
 	  int fileDescriptor = OpenForReadWrite(name, FALSE);
 
 	  printf("Calling OpenFile with type\n");
@@ -103,14 +122,24 @@ class FileSystem {
 	  if (fileDescriptor == -1) return NULL;
 
 	  currentSize++; // mo file thanh cong tang bien diem trong bang mo ta file
+	  recentId = currentSize;
 	  return new OpenFile(fileDescriptor, type);
     }
 
     void CloseFileId(int OpenFileId) {
+
+	if(OpenFileId == 0 || OpenFileId == 1) {
+		return;
+        }
+	
+	
 	delete fileIndex[OpenFileId];
 	fileIndex[OpenFileId] = NULL;
-	currentSize--;
+
 	
+	currentSize--;
+	return;
+
     }
     bool Remove(char *name) { return Unlink(name) == 0; }
 
@@ -122,7 +151,7 @@ class FileSystem {
 
     OpenFile** fileIndex; // bang mo ta file trong khoi tao cua fileSystem
     int currentSize; // max = 10	
-
+    int recentId;
 
     FileSystem(bool format);		// Initialize the file system.
 					// Must be called *after* "synchDisk" 
