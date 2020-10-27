@@ -190,39 +190,46 @@ ExceptionHandler(ExceptionType which)
 				
 				mode = machine->ReadRegister(5);
 				printf("Mode = %d\n", mode);
-				
-				if(mode < 0 || mode > 1) {
-					printf("Khong ton tai mode tren\n");
-					machine->WriteRegister(2, -1);
-					break;
-				}
-				
-				else if(fileSystem->currentSize >= 10) {
+
+				if(fileSystem->currentSize >= 10) {
 					printf("Khong the mo file vi bang mo ta file da het o nho\n");
 					machine->WriteRegister(2, -1);
 					break;
 				}
-				else if(mode == 0 || mode == 1) {
-					
-					if(strcmp(filename, "stdin") == 0) {
+
+
+				if(strcmp(filename, "stdin") == 0) {
+					if(mode == 2) {
 						printf("Mo thanh cong file stdin (Id = 0)\n");
 						machine->WriteRegister(2, 0);
 						break;
 					}
+					else {
+						printf("Mode khong dung cho stdin\n");
+						machine->WriteRegister(2, -1);
+						break;
+					}
+				}
 
-					else if(strcmp(filename, "stdout") == 0) {
+				else if(strcmp(filename, "stdout") == 0) {
+					if(mode == 3) {
 						printf("Mo thanh cong file stdout (Id = 1)\n");
 						machine->WriteRegister(2, 1);
 						break;
 					}
+					else {
+						printf("Mode khong dung cho stdout\n");
+						machine->WriteRegister(2, -1);
+						break;
+					}
+				}
+				else if(mode == 0 || mode == 1) {
 
-					else if(fileSystem->Open(filename, mode) == NULL) {
+					if(fileSystem->Open(filename, mode) == NULL) {
 						printf("File khong ton tai\n");
 						machine->WriteRegister(2, -1);
 						break;
 					}
-
-					
 
 					else if(mode == 0) {
 						printf("Mo file %s thanh cong (mode = doc va ghi)\n", filename);

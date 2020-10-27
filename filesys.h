@@ -62,8 +62,8 @@ class FileSystem {
 	this->Create("stdin", 0); // con tro kieu FileSystem
 	this->Create("stdout", 0);
 	
-	fileIndex[0] = this->Open("stdin", 0); 
-	fileIndex[1] = this->Open("stdout", 0);
+	fileIndex[0] = this->Open("stdin", 2); // type = 2 cho stdin 
+	fileIndex[1] = this->Open("stdout", 3);// type = 3 cho stdout
 	
     }
 	
