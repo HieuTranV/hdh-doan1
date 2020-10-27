@@ -245,13 +245,6 @@ FileSystem::Create(char *name, int initialSize)
 OpenFile *
 FileSystem::Open(char *name)
 {
-    if(strcmp(name, "stdin") == 0) { // file stdin va stdout da mo tu luc khoi tao fileSystem
-		return fileIndex[0];		
-    }
-    if(strcmp(name, "stout") == 0) {
-		return fileIndex[1];
-    }
- 
     Directory *directory = new Directory(NumDirEntries);
     OpenFile *openFile = NULL;
     int sector, emptySlot;
@@ -285,14 +278,6 @@ OpenFile *
 FileSystem::Open(char *name, int type)
 {
 
-     if(strcmp(name, "stdin") == 0) { // file stdin va stdout da mo tu luc khoi tao fileSystem
-		return fileIndex[0];		
-     }
-     if(strcmp(name, "stout") == 0) {
-		return fileIndex[1];
-     }
-
- 
     Directory *directory = new Directory(NumDirEntries);
     OpenFile *openFile = NULL;
     int sector, emptySlot;

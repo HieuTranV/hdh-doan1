@@ -88,13 +88,7 @@ class FileSystem {
 
     OpenFile* Open(char *name) {
 
-	if(strcmp(name, "stdin") == 0) { // file stdin va stdout da mo tu luc khoi tao fileSystem
-		return fileIndex[0];
-	}
-	if(strcmp(name, "stout") == 0) {
-		return fileIndex[1];
-	}
-    	int fileDescriptor = OpenForReadWrite(name, FALSE);
+	int fileDescriptor = OpenForReadWrite(name, FALSE);
 
 	printf("Calling OpenFile without type\n");
 	if (fileDescriptor == -1) return NULL;
@@ -107,13 +101,6 @@ class FileSystem {
 
 
     OpenFile* Open(char* name, int type) {
-
-          if(strcmp(name, "stdin") == 0) { // file stdin va stdout da mo tu luc khoi tao fileSystem
-		return fileIndex[0];		
-	  }
-	  if(strcmp(name, "stout") == 0) {
-		return fileIndex[1];
-	  }
 
 	  int fileDescriptor = OpenForReadWrite(name, FALSE);
 

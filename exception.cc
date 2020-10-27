@@ -140,31 +140,43 @@ ExceptionHandler(ExceptionType which)
  				break;
 			}
 			case SC_Create: {
-				printf("Calling SC_Create\n");
-				int virtAddr, MaxFileLength = 32;
+				int virtAddr;
 				char* filename;
-				
+
+				DEBUG('a', "\n SC CreateFile call...");
+				DEBUG('a', "\n  Reading virtual address of filename");
+
 				virtAddr = machine->ReadRegister(4);
-				filename = User2System(virtAddr,MaxFileLength+1);
-				if (filename == NULL) {
+				DEBUG('a', "\n Reading filename.");
+				filename = User2System(virtAddr, MaxFileLength + 1);
+
+				if (strlen(filename) == 0)
+				{
+					printf("\nFile name is wrong!!!");
+					machine->WriteRegister(2, -1); 
+					delete filename;
+					break;
+				}
+
+				if (filename == NULL)
+				{
 					printf("\n Not enough memory in system");
-					machine->WriteRegister(2,-1);
+					DEBUG('a', "\n Not enough memory in system");
+					machine->WriteRegister(2, -1);
 					delete filename;
 					return;
 				}
-				
-				if (!fileSystem->Create(filename,0)) {
-					printf("\n Error create file '%s'",filename);
-					machine->WriteRegister(2,-1);
+				DEBUG('a', "\n Finish reading filename.");
+				if (!fileSystem->Create(filename, 0))
+				{
+					printf("\n Error care file '%s' ", filename);
+					machine->WriteRegister(2, -1);
 					delete filename;
 					return;
 				}
-				
-				advancePC();
-				machine->WriteRegister(2,0);
+				machine->WriteRegister(2, 0);
 				delete filename;
-				
-				break; 
+				break;
 			}
 			case SC_Open: 
 			{
@@ -240,7 +252,181 @@ ExceptionHandler(ExceptionType which)
 				}	
 
 			}
+			case SC_Read: //int Read(char *buffer, int size, OpenFileId id);
+		{			
+			//Read "size" bytes from the open file into "buffer
+			int PrePos;
+			int NewPos;
+			char* buff;
+			int virtAddr = machine->ReadRegister(4);
+			int size = machine->ReadRegister(5);
+			int ID = machine->ReadRegister(6);
+			if (ID < 0 || ID > 10)
+			{
+				printf("\n\n Out of mode table. Cannot read file.");
+				machine->WriteRegister(2, -1);
+//				ProgramCounter();
+				return;
+			}
+			if (fileSystem->fileIndex[ID] == NULL ) 
+			{
+				printf("\nNon-existence");
+				machine->WriteRegister(2, -1);
+				//ProgramCounter();
+				return;
+			}
+			if (fileSystem->fileIndex[ID]->type == 3) //file stdout
+			{
+				int len = gSynchConsole->Read(buff, size);
+				System2User(virtAddr, len, buff);
+				machine->WriteRegister(2, len);
+				//ProgramCounter();
+				delete buff;
+				return;
+			}
+			//Copy buffer from System memory space to User memory space
+			buff = User2System(virtAddr, size);
+			if (fileSystem->fileIndex[ID]->type == 2)
+			{
+				int len = gSynchConsole->Read(buff, size);
+				System2User(virtAddr, len, buff);
+				machine->WriteRegister(2, len);
+				delete buff;
+                                //ProgramCounter();
+				return;
+			}
+			PrePos = fileSystem->fileIndex[ID]->GetCurrentPos();
+			if ((fileSystem->fileIndex[ID]->Read(buff, size))> 0)
+			{	
+				NewPos = fileSystem->fileIndex[ID]->GetCurrentPos();
+				System2User(virtAddr, NewPos- PrePos, buff);
+				machine->WriteRegister(2, NewPos - PrePos);
+			}
+			else
+			{	printf("\n\n Empty file");
+				machine->WriteRegister(2, -2);
+			}
+			delete buff;
+			//ProgramCounter();
+			return;
+		}
+		case SC_Write:// int Write(char *buffer, int size, OpenFileId id);
+		{
+			//Write "size" bytes from "buffer" to the open file
+			int PrePos;
+			int NewPos;
+			char* buff;
+			int virtAddr = machine->ReadRegister(4);
+			int size = machine->ReadRegister(5);
+			int ID = machine->ReadRegister(6);
+			if (fileSystem->fileIndex[ID] == NULL ) 
+			{
+				printf("\nNon-existence");
+				machine->WriteRegister(2, -1);
+				ProgramCounter();
+				return;
+			}
+			//read-only file and stdin file
+			if (fileSystem->fileIndex[ID]->type == 1 || fileSystem->fileIndex[ID]->type == 2)
+			{
+				printf("\n Cannot not write this file.");
+				machine->WriteRegister(2, -1);
+				ProgramCounter();
+				return;	
+			}
+			buff = User2System(virtAddr, size);
+			PrePos = fileSystem->fileIndex[ID]->GetCurrentPos();
+			if (fileSystem->fileIndex[ID]->type == 0 && fileSystem->fileIndex[ID]->Write(buff, size) > 0)
+			{
+				NewPos = fileSystem->fileIndex[ID]->GetCurrentPos();
+				machine->WriteRegister(2, NewPos - PrePos);
+				ProgramCounter();
+				delete buff;
+				return;
+			}
+			if (fileSystem->fileIndex[ID]->type == 3)
+			{
+				int i;
+				for (i =0; i<strlen(buff); i++)
+				{
+					if (buff[i] != 0 && buff[i]!= '\n')
+					{
+						gSynchConsole->Write(buff + i, 1);
+					}
+					else
+					{
+						break;
+					}
+				}
+				buff[i] = '\n';
+				gSynchConsole->Write(buff+1, 1);
+				machine->WriteRegister(2, i-1);
+				//ProgramCounter();
+				delete buff;
+				return;
+			}
+
+			//Copy buffer from System memory space to User memory space
 			
+		}
+		case SC_ReadInt:
+		{	
+			// read integer number from console
+			// DEBUG('a', "\n Read a integer from console.");
+			// printf("\n\n Read a integer from console.");
+			int number = 0;
+			int len = 0;
+			int sign = 0;
+			int i = 0;
+			char* buff = new char[MAX_INT_LENGTH];
+			len = gSynchConsole->Read(buff, MAX_INT_LENGTH);
+			sign = buff[0] == '-' ? 1:0;
+			for (i = sign; i < len; i++)
+			{
+				number = number * 10 + (int)(buff[i] & MASK_GET_NUM);
+			}
+			number = buff[0] == '-' ? -1*number : number;
+			machine->WriteRegister(2, number);
+			delete buff;
+			break;
+		}
+		case SC_PrintInt:
+		{
+			// print integer number from console
+			DEBUG('a', "\n Print a integer to console.");
+			printf("\n\n Print a integer to console.");
+			
+			break;
+		}
+		case SC_PrintStr:
+		{
+			int buffAddr = machine->ReadRegister(4);
+			int i = 0;
+			char* buff = new char[MaxLineLength];
+			buff = User2System(buffAddr, MaxLineLength);
+
+			while (buff[i] != 0 && buff[i] != '\n')
+			{
+				gSynchConsole->Write(buff+i, 1);
+				i++;
+			}
+
+			buff[i]='\n';
+			gSynchConsole->Write(buff+i, 1);
+			delete[] buff;
+			break;			
+		}
+		case SC_ReadStr:
+		{
+			char *buff = new char[MaxLineLength];
+			if (buff == NULL) break;
+			int bufAddrUser = machine->ReadRegister(4);
+			int len = machine->ReadRegister(5);
+			int size = gSynchConsole->Read(buff, len);
+			System2User(bufAddrUser, size, buff);
+			delete[] buff;
+			return;
+		}
 		
 			
 		}
