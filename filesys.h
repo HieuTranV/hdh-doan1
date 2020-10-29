@@ -49,11 +49,13 @@ class FileSystem {
     OpenFile** fileIndex; // bang mo ta file trong khoi tao cua fileSystem
     int currentSize; // max = 10
     int recentId; // Id vua moi duoc mo
-    
+    int flag; // co hieu bao hieu cho viec da mo file stdin, stdout
 	
     FileSystem(bool format) {
 	fileIndex = new OpenFile*[10];
 	currentSize = 0;
+	recentId = -1;
+	flag = 0;
 	for(int i = 0; i < 10; i++) {
 		fileIndex[i] = NULL;
 	}
@@ -68,11 +70,20 @@ class FileSystem {
     }
 	
     ~FileSystem() {
+	
+	currentSize = 0;
+	recentId = -1;
+	
 	for(int i = 0; i < 10; i++) {
-		delete fileIndex[i];
-    }
+		if(fileIndex[i] != NULL && i != 2) { 
+		// i = 2 la fileIndex tro toi vung nho openFile cua ten chuong trinh vd : /test/create.c
+		// nen khong duoc xoa vung nho truoc khi ket thuc chuong trinh
+			
+			delete fileIndex[i];
+			fileIndex[i] = NULL;
+		}
+	}
     	delete[] fileIndex; 
-
     }
 
     
@@ -89,13 +100,38 @@ class FileSystem {
     OpenFile* Open(char *name) {
 
 	int fileDescriptor = OpenForReadWrite(name, FALSE);
-
+	int emptySlot;
 	printf("Calling OpenFile without type\n");
+
+	printf("FileName : %s\n", name);
 	if (fileDescriptor == -1) return NULL;
 
-	currentSize++; // mo file thanh cong tang bien diem trong bang mo ta file
-	recentId = currentSize;
-	return new OpenFile(fileDescriptor);
+	if(strcmp(name, "stdin") == 0) {
+		fileIndex[0] = new OpenFile(fileDescriptor);
+		currentSize++;
+		recentId = 0;
+		return fileIndex[0];
+	}
+	else if(strcmp(name, "stdout") == 0) {
+		fileIndex[1] = new OpenFile(fileDescriptor);
+		currentSize++;
+		recentId = 1;
+		return fileIndex[1];
+	}
+	else {
+	  	for (int i = 0; i < 10; i++) {
+			if(fileIndex[i] == NULL) {
+				emptySlot = i;
+				break;
+			}	
+		}
+		fileIndex[emptySlot] = new OpenFile(fileDescriptor);
+	  	currentSize++; // mo file thanh cong tang bien diem trong bang mo ta file
+	  	recentId = emptySlot;
+		
+		
+	  	return fileIndex[emptySlot];
+	  }
       }
 
 
@@ -103,14 +139,37 @@ class FileSystem {
     OpenFile* Open(char* name, int type) {
 
 	  int fileDescriptor = OpenForReadWrite(name, FALSE);
-
+	  int emptySlot;
 	  printf("Calling OpenFile with type\n");
-
+	  printf("FileName : %s\n", name);
 	  if (fileDescriptor == -1) return NULL;
+		
+	  if(strcmp(name, "stdin") == 0) {
+		fileIndex[0] = new OpenFile(fileDescriptor, type);
+		currentSize++;
+		recentId = 0;
+		return fileIndex[0];
+	  }
+	  else if(strcmp(name, "stdout") == 0) {
+		fileIndex[1] = new OpenFile(fileDescriptor, type);
+		currentSize++;
+		recentId = 1;
+		return fileIndex[1];
+	  }
+	  else {
+	  	for (int i = 0; i < 10; i++) {
+			if(fileIndex[i] == NULL) {
+				emptySlot = i;
+				break;
+			}
+		}
+		fileIndex[emptySlot] = new OpenFile(fileDescriptor, type);
+	  	currentSize++; // mo file thanh cong tang bien diem trong bang mo ta file
+	  	recentId = emptySlot;
 
-	  currentSize++; // mo file thanh cong tang bien diem trong bang mo ta file
-	  recentId = currentSize;
-	  return new OpenFile(fileDescriptor, type);
+	  	return fileIndex[emptySlot];
+	  }
+	  
     }
 
     void CloseFileId(int OpenFileId) {

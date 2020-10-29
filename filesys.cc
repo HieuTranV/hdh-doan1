@@ -258,6 +258,7 @@ FileSystem::Open(char *name)
 	for (int i = 0; i < 10; i++){
 		if(fileIndex[i] == NULL) {
 			emptySlot = i;
+			break;
 		}
 	}
 	fileIndex[emptySlot] = new OpenFile(sector);	// name was found in directory
@@ -268,7 +269,7 @@ FileSystem::Open(char *name)
 	return fileIndex[emptySlot];	// return NULL if not found
     }
     currentSize++;
-    recentId = currentSize;
+    recentId = emptySlot;
     return fileIndex[emptySlot];	
 			
 }
@@ -293,6 +294,7 @@ FileSystem::Open(char *name, int type)
 	for (int i = 0; i < 10; i++){
 		if(fileIndex[i] == NULL) {
 			emptySlot = i;
+			break;
 		}
 	}
 	fileIndex[emptySlot] = new OpenFile(sector, type);	// name was found in directory
@@ -303,7 +305,7 @@ FileSystem::Open(char *name, int type)
 	return fileIndex[emptySlot];	// return NULL if not found
     }
     currentSize++;
-    recentId = currentSize;
+    recentId = emptySlot;
     return fileIndex[emptySlot];	
 
 }

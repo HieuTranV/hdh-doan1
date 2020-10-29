@@ -31,7 +31,7 @@ class OpenFile {
  
     int type;
     OpenFile(int f) { file = f; currentOffset = 0; }	// open the file
-    
+
     
     OpenFile(int f, int mode) { 
 	file = f;
@@ -62,7 +62,14 @@ class OpenFile {
 		}
 
     int Length() { Lseek(file, 0, 2); return Tell(file); }
-    
+
+    int GetCurrentPos() { currentOffset = Tell(file); return currentOffset; }
+
+    int Seek(int position) {
+		Lseek(file, position, 0);
+		currentOffset = Tell(file);
+		return currentOffset;
+		}
   private:
     int file;
     int currentOffset;
@@ -100,7 +107,10 @@ class OpenFile {
 					// file (this interface is simpler 
 					// than the UNIX idiom -- lseek to 
 					// end of file, tell, lseek back 
-    
+    int GetCurrentPos()
+    {
+	return seekPosition;
+    }
   private:
     FileHeader *hdr;			// Header for this file 
     int seekPosition;			// Current position within the file
@@ -109,3 +119,4 @@ class OpenFile {
 #endif // FILESYS
 
 #endif // OPENFILE_H
+

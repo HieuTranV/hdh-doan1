@@ -204,3 +204,4 @@ OpenFile::Length()
 { 
     return hdr->FileLength(); 
 }
+
