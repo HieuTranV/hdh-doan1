@@ -286,6 +286,48 @@ void ExceptionHandler(ExceptionType which)
 			}	
 			break;
 		}
+		case SC_Seek:
+		{
+			int pos = machine->ReadRegister(4);
+			int fileID = machine->ReadRegister(5);
+
+			if(fileID < 1 || fileID > 10)
+			{
+				printf("\nID is out of range");
+				machine->WriteRegister(2, -1);
+				ProgramCounter();
+				return;
+			}
+
+			//
+			if(fileSystem->fileIndex[fileID] == NULL) 
+			{
+				printf("\nFile does not exist");
+				machine->WriteRegister(2, -1);
+				ProgramCounter();
+				return;
+			}
+
+			if(fileID == 0 || fileID == 1)
+			{
+				printf("\nCan not seek to file");
+				machine->WriteRegister(2, -1);			
+			}
+			
+			pos = (pos == -1) ? fileSystem->fileIndex[fileID]->Length() : pos;
+			if(pos > fileSystem->fileIndex[fileID]->Length() || pos < 0)
+			{
+				printf("\nCan not seek file to this position");
+				machine->WriteRegister(2, -1); 
+			}
+			else
+			{
+				fileSystem->fileIndex[fileID]->Seek(pos);
+				machine->WriteRegister(2, pos);
+			}
+			ProgramCounter();
+			return;
+		}
 		case SC_Read: //int Read(char *buffer, int size, OpenFileId id);
 		{			
 			//Read "size" bytes from the open file into "buffer
