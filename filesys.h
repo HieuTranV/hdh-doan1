@@ -106,28 +106,28 @@ class FileSystem {
 	printf("FileName : %s\n", name);
 	if (fileDescriptor == -1) return NULL;
 
-	if(strcmp(name, "stdin") == 0) {
-		fileIndex[0] = new OpenFile(fileDescriptor);
-		currentSize++;
-		recentId = 0;
+	if(strcmp(name, "stdin") == 0) { // neu file nhap vao la stdin
+		fileIndex[0] = new OpenFile(fileDescriptor); //cap phat vung nho cho stdin voi index tuong ung (quy dinh la 0)
+		currentSize++; // tang bien diem kich thuoc hien tai cua bang mo ta file
+		recentId = 0; // OpenFileId gan nhat la 0
 		return fileIndex[0];
 	}
-	else if(strcmp(name, "stdout") == 0) {
-		fileIndex[1] = new OpenFile(fileDescriptor);
+	else if(strcmp(name, "stdout") == 0) { // neu file nhap vao la stdout
+		fileIndex[1] = new OpenFile(fileDescriptor); //cap phat vung nho cho stdout voi index tuong ung (quy dinh la 1)
 		currentSize++;
-		recentId = 1;
+		recentId = 1; // OpenFileId gan nhat la 1
 		return fileIndex[1];
 	}
-	else {
-	  	for (int i = 0; i < 10; i++) {
+	else { // mo file tap tin 
+	  	for (int i = 0; i < 10; i++) { // tim cho trong tren bang mo ta file
 			if(fileIndex[i] == NULL) {
 				emptySlot = i;
 				break;
 			}	
 		}
-		fileIndex[emptySlot] = new OpenFile(fileDescriptor);
+		fileIndex[emptySlot] = new OpenFile(fileDescriptor); // cap phat vung nho cho file do voi cho trong vua tim duoc
 	  	currentSize++; // mo file thanh cong tang bien diem trong bang mo ta file
-	  	recentId = emptySlot;
+	  	recentId = emptySlot; // OpenFileId gan nhat la file vua duoc mo
 		
 		
 	  	return fileIndex[emptySlot];
@@ -145,7 +145,8 @@ class FileSystem {
 	  if (fileDescriptor == -1) return NULL;
 		
 	  if(strcmp(name, "stdin") == 0) {
-		fileIndex[0] = new OpenFile(fileDescriptor, type);
+		fileIndex[0] = new OpenFile(fileDescriptor, type); // tuong tu nhu ham tren nhung co doi so type 
+								  // 0 la read + write, 1 la read, 2 la stdin , 3 la stout
 		currentSize++;
 		recentId = 0;
 		return fileIndex[0];
@@ -163,7 +164,7 @@ class FileSystem {
 				break;
 			}
 		}
-		fileIndex[emptySlot] = new OpenFile(fileDescriptor, type);
+		fileIndex[emptySlot] = new OpenFile(fileDescriptor, type); // 
 	  	currentSize++; // mo file thanh cong tang bien diem trong bang mo ta file
 	  	recentId = emptySlot;
 
@@ -174,16 +175,17 @@ class FileSystem {
 
     void CloseFileId(int OpenFileId) {
 
-	if(OpenFileId == 0 || OpenFileId == 1) {
+	if(OpenFileId == 0 || OpenFileId == 1) { // neu la stdin va stdout thi return
+						// vi 2 file dac biet nay ton tai trong suot qua trinh chay
 		return;
         }
 	
 	
-	delete fileIndex[OpenFileId];
-	fileIndex[OpenFileId] = NULL;
+	delete fileIndex[OpenFileId]; // xoa vung nho voi openFileId tuong ung
+	fileIndex[OpenFileId] = NULL; 
 
 	
-	currentSize--;
+	currentSize--; //giam kich thuoc bang mo ta file 
 	return;
 
     }
@@ -233,3 +235,4 @@ class FileSystem {
 #endif // FILESYS
 
 #endif // FS_H
+

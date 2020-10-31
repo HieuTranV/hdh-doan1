@@ -1,8 +1,7 @@
 #include "syscall.h"
 #define MAX_LENGTH 32
 
-int 
-main()
+int main()
 {
 	int openFileId, stdin;
 	int fileSize, i;

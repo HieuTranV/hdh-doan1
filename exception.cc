@@ -196,57 +196,57 @@ ExceptionHandler(ExceptionType which)
 				int virtAddr, mode, retVal;
 				char* filename;
 				
-				virtAddr = machine->ReadRegister(4);
-				filename = User2System(virtAddr,MaxFileLength+1);
+				virtAddr = machine->ReadRegister(4); // doc doi so thu nhat la chuoi ten cua file can mo
+				filename = User2System(virtAddr,MaxFileLength+1); // convert sang vung nho cua kernel
 				
-				mode = machine->ReadRegister(5);
-				if(fileSystem->currentSize >= 10) {
-					printf("Khong the mo file vi bang mo ta file da het o nho\n");
-					machine->WriteRegister(2, -1);
+				mode = machine->ReadRegister(5); // doi so thu 2 la type (0 la read + write, 1 la read, 2 la stdin, 3 la stdout)
+				if(fileSystem->currentSize >= 10) { // truong hop bang mo ta file da vuot qua pham vi cho phep
+					printf("The file descriptor table is full\n");
+					machine->WriteRegister(2, -1); // tra ve - 1
 					break;
 				}
 
 
 				if(strcmp(filename, "stdin") == 0) {
-					if(mode == 2) {
-						printf("Mo thanh cong file stdin (Id = 0)\n");
+					if(mode == 2) { // mode phai dung voi stdin thi mo thanh cong file
+						printf("Successfully open stdin(Id = 0)\n");
 						machine->WriteRegister(2, 0);
 						break;
 					}
 					else {
-						printf("Mode khong dung cho stdin\n");
+						printf("Type is not compatible with stdin\n");
 						machine->WriteRegister(2, -1);
 						break;
 					}
 				}
 
 				else if(strcmp(filename, "stdout") == 0) {
-					if(mode == 3) {
-						printf("Mo thanh cong file stdout (Id = 1)\n");
+					if(mode == 3) { // mode phai dung voi stdout thi mo thanh cong file
+						printf("Successfully open stdout(Id = 1)\n");
 						machine->WriteRegister(2, 1);
 						break;
 					}
 					else {
-						printf("Mode khong dung cho stdout\n");
+						printf("Type is not compatible with stdout");
 						machine->WriteRegister(2, -1);
 						break;
 					}
 				}
 				else if(mode == 0 || mode == 1) {
 
-					if(fileSystem->Open(filename, mode) == NULL) {
-						printf("File khong ton tai\n");
+					if(fileSystem->Open(filename, mode) == NULL) { // goi ham Open cua lop filesystem
+						printf("%s is not exist\n", filename);
 						machine->WriteRegister(2, -1);
 						break;
 					}
 
 					else if(mode == 0) {
-						printf("Mo file %s thanh cong (mode = doc va ghi)\n", filename);
+						printf("Successfully open file %s (mode = 0)\n", filename);
 					}
 					else {
-						printf("Mo file %s thanh cong (mode = doc)\n", filename);
+						printf("Successfully open file %s (mode = 1)\n", filename);
 					}
-					retVal = fileSystem->recentId;
+					retVal = fileSystem->recentId; // tra ve OpenFileId vua mo
 					printf("OpenFileID cua %s la : %d\n", filename, retVal);
 					printf("CurrentSize : %d\n", fileSystem->currentSize);
 					machine->WriteRegister(2, retVal);
@@ -257,16 +257,16 @@ ExceptionHandler(ExceptionType which)
 			case SC_Close: 
 			{
 				int openFileId;	
-				openFileId = machine->ReadRegister(4);
+				openFileId = machine->ReadRegister(4); // lay OpenFileId can close
 				if(openFileId < 0 || openFileId > 9) {
-					printf("OpenFileId %d khong hop le\n", openFileId);
-					machine->WriteRegister(2, -1);
+					printf("OpenFileId %d is not valid\n", openFileId);
+					machine->WriteRegister(2, -1); // tra ve -1 neu OpenFileId khong hop le
 					break;
 				}
 				else {
-					fileSystem->CloseFileId(openFileId);
-					printf("Close fileID : %d thanh cong\n", openFileId);
-					machine->WriteRegister(2, 0);
+					fileSystem->CloseFileId(openFileId); // goi ham CloseFileId dinh nghia trong filesystem
+					printf("Close fileID : %d successfully\n", openFileId);
+					machine->WriteRegister(2, 0); // tra ve 0 neu dong thanh cong
 					break;
 				}	
 
@@ -275,7 +275,7 @@ ExceptionHandler(ExceptionType which)
 
 			case SC_Read: //int Read(char *buffer, int size, OpenFileId id);
 		{
-			printf("Calling ScRead\n");			
+
 			//Read "size" bytes from the open file into "buffer
 			int PrePos;
 			int NewPos;
@@ -326,7 +326,7 @@ ExceptionHandler(ExceptionType which)
 				
 			}
 			else
-			{	printf("\n\n Empty file\n");
+			{	//printf("\n\n Empty file\n");
 				machine->WriteRegister(2, -2);
 				
 			}
@@ -418,12 +418,6 @@ ExceptionHandler(ExceptionType which)
 					//ProgramCounter();
 					break;
 				}
-				/*printf("%d\n",fileSystem->fileIndex[0]);
-				printf("%d\n",fileSystem->fileIndex[1]);
-				printf("%d\n",fileSystem->fileIndex[2]);
-				printf("%d\n",fileSystem->fileIndex[3]);*/
-				//printf("%d\n",fileSystem->fileIndex[fileID]);
-						
 				if(fileSystem->fileIndex[fileID] == NULL) 
 				{
 					printf("\nFile does not exist");
@@ -456,18 +450,14 @@ ExceptionHandler(ExceptionType which)
 			
 			case SC_PrintStr:
 			{
-				printf("Calling SCPrintStr\n");
+				
 				int buffAddr = machine->ReadRegister(4);
 				int i = 0;
 				char* buff;
-				printf("Before User2Sys\n");
 				buff = User2System(buffAddr, MaxLineLength);
-				printf("After User2Sys\n");
-				
-				
+
 				while (buff[i] != 0 && buff[i] != '\n')
 				{
-					printf("In loop\n");
 					gSynchConsole->Write(buff+i, 1);
 					i++;
 				}
@@ -490,10 +480,17 @@ ExceptionHandler(ExceptionType which)
 				//ProgramCounter();
 				break;
 			}
-
-
+			case SC_PrintChar:
+			{
+				char c = machine->ReadRegister(4); // Doc ki tu tu thanh ghi r4
+				gSynchConsole->Write(&c, 1); // In ky tu tu bien c, 1 byte
+				
+				break;
+			}
+			
 
 		}
-		advancePC();	
+		ProgramCounter();
 	}	
 }
+

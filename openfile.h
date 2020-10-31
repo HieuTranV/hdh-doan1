@@ -33,7 +33,8 @@ class OpenFile {
     OpenFile(int f) { file = f; currentOffset = 0; }	// open the file
 
     
-    OpenFile(int f, int mode) { 
+    OpenFile(int f, int mode) { // ham openFile co doi so type 
+				// 0 la read + write, 1 la read, 2 la stdin, 3 la stdout
 	file = f;
 	currentOffset = 0;
 	type = mode;
@@ -119,4 +120,5 @@ class OpenFile {
 #endif // FILESYS
 
 #endif // OPENFILE_H
+
 
